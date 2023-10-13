@@ -1,0 +1,72 @@
+%YAML 1.2
+---
+name: bruno
+scope: source.bruno
+version: 2
+file_extensions:
+  - bru
+
+contexts:
+  prototype:
+    - include: comments
+
+  main:
+    - include: blocks
+
+  blocks:
+    - include: array
+    - include: object
+    - include: tags
+
+  pop-eol:
+    - match: (?=$|\n)
+      pop: true
+
+  tags:
+    - match: |-
+        ^(?x:
+          (meta|get|post|put|delete|options|trace|connect|head(?:ers)?|query|
+          body(?:\:(?:json|text|xml|form-urlencoded|multipart-form|(?:graphql(?:\:vars)?)))?|
+          (?:vars|script)(?:\:(?:pre-request|post-response|secret))?|
+          auth(?:\:(?:bearer|basic))|assert|tests|docs|
+        ))
+      scope: support.class.tag.bruno
+
+  array:
+    - match: \[
+      scope: punctuation.section.sequence.begin.bruno
+      push:
+        - meta_scope: meta.sequence.bruno
+        - match: \]
+          scope: punctuation.section.sequence.end.bruno
+          pop: true
+        - match: ','
+          scope: punctuation.separator.sequence.bruno
+        - include: kv
+
+  object:
+    - match: \{
+      scope: punctuation.section.mapping.begin.bruno
+      push:
+        - meta_scope: meta.mapping.bruno
+        - match: \}
+          scope: punctuation.section.mapping.end.bruno
+          pop: true
+        - include: kv
+
+  kv:
+    - match: ^(?:\s*)(\@|\$)?([\w(\:\-\.)]+)(\:)(?:\s)(.*$)
+      captures:
+        1: variable.language.bruno
+        2: meta.mapping.key.bruno keyword.key.bruno
+        3: punctuation.separator.mapping.key-value.bruno
+        4: meta.mapping.value.bruno
+
+  # Treat disabled keys as comments
+  comments:
+    - match: ^(?:\s*)(\~)
+      scope: punctuation.definition.comment.bruno
+      push:
+        - meta_scope: comment.line.bruno variable.other.key.disabled.bruno
+        - match: \n
+          pop: true
